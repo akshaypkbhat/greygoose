@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grey Goose</title>
+  <link rel="stylesheet" href="style.css?v=algo30">
+</head>
+<body class="hide-extra">
+  <button id="tools-toggle" class="tools-toggle" aria-label="Show or hide controls" title="Show or hide controls">⚙</button>
+  <header>
+    <h1>Grey Goose</h1>
+    <div class="tools">
+      <button id="midi-connect">Connect MIDI</button>
+      <button id="learn-toggle">MIDI learn: off</button>
+      <button id="learn-clear">Clear bindings</button>
+      <button id="find-leds">Find LEDs</button>
+      <select id="algo" aria-label="Beat detection algorithm">
+        <option value="autocorr">Autocorrelation grid (basic)</option>
+        <option value="dp">Beat tracker 70–180 BPM</option>
+        <option value="dp-slow">Beat tracker 60–110 BPM (half-time)</option>
+      </select>
+      <button id="save-mappings">Save mappings</button>
+      <button id="load-mappings">Load mappings</button>
+      <input id="mappings-file" type="file" accept="application/json,.json" hidden>
+    </div>
+    <div id="status" class="status">Load some tracks to start. Use Chrome for MIDI.</div>
+    <div id="midi-monitor" class="monitor"></div>
+  </header>
+
+  <main class="quad">
+    <!-- Top left: library -->
+    <section id="library" class="panel q-lib" aria-label="Library">
+      <h2>Library</h2>
+      <div class="libknob-row">
+        <div id="lib-knob" class="libknob" data-ctl="lib.scroll" role="slider" tabindex="0" aria-label="Library scroll knob" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0"><i></i></div>
+        <span class="hint">Turn to scroll the library</span>
+      </div>
+      <div id="drop" class="drop">Drop audio files here, or
+        <label class="file-label">choose files<input id="file-input" type="file" accept="audio/*" multiple hidden></label>
+      </div>
+      <ul id="track-list" class="tracks"></ul>
+      <div class="row libnav">
+        <button data-ctl="lib.up" aria-label="Select previous track">▲</button>
+        <button data-ctl="lib.down" aria-label="Select next track">▼</button>
+        <button data-ctl="lib.loadA">→ A</button>
+        <button data-ctl="lib.loadB">→ B</button>
+      </div>
+    </section>
+
+    <!-- Top right: controller (deck controls, crossfader, master) -->
+    <section class="panel q-ctl" aria-label="Controller">
+      <h2>Controller</h2>
+      <div class="decks">
+        <div id="deck-A" class="deck"></div>
+        <div id="deck-B" class="deck"></div>
+      </div>
+      <section class="panel master">
+        <label>Crossfader <span class="xf-labels"><span>A</span><span>B</span></span>
+          <input type="range" min="0" max="1" step="0.001" value="0.5" data-ctl="xfade">
+        </label>
+        <label>Master <input type="range" min="0" max="1.5" step="0.01" value="1" data-ctl="master"></label>
+      </section>
+    </section>
+
+    <!-- Bottom: the two tracks, zoomed live, with BPM boxes on the left -->
+    <section class="panel q-tracks" aria-label="Tracks">
+      <h2>Tracks</h2>
+      <div id="lane-A"></div>
+      <div id="lane-B"></div>
+    </section>
+  </main>
+
+  <script>
+    // Toggle the extra controls (toolbar, transport, More, master). The controls stay in the page, so MIDI bindings still work.
+    document.getElementById('tools-toggle').addEventListener('click', () => document.body.classList.toggle('hide-extra'));
+  </script>
+  <script src="analyze.js?v=algo35"></script>
+  <script src="app.js?v=algo35"></script>
+</body>
+</html>

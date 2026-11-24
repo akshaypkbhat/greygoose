@@ -1,0 +1,205 @@
+/* Grey Goose palette: grey primary, cyan accent, dark purple secondary. */
+:root {
+  --bg: #2E2D2A;
+  --panel: #3A3935;
+  --line: #55534D;
+  --text: #E6E3DC;
+  --muted: #8E8A80;
+  --accent: #54D5E1;
+  --a: #54D5E1;
+  --b: #B9B7B2;
+  --purple: #2F2340;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px -apple-system, system-ui, sans-serif; padding: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
+h1 { margin: 0 16px 0 0; font-size: 22px; color: var(--accent); }
+h2 { margin: 0 0 8px; font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; font: inherit; }
+button:hover { border-color: var(--accent); }
+button.on { background: var(--accent); color: #111; border-color: var(--accent); }
+.status, .monitor { color: var(--muted); font-size: 12px; width: 100%; }
+main { display: grid; gap: 16px; grid-template-columns: 1fr; }
+.panel, .deck { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.decks { display: grid; gap: 16px; grid-template-columns: 1fr; }
+.deck h3 { margin: 0 0 4px; font-size: 16px; }
+.deck .name { color: var(--muted); font-size: 12px; min-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck .time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+.deck.A h3 { color: var(--a); }
+.deck.B h3 { color: var(--b); }
+.row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.row label, .deck label { display: grid; grid-template-columns: 70px 1fr; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.row label { display: flex; align-items: center; gap: 6px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.eq { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.eq label { grid-template-columns: 1fr; text-align: center; }
+.drop { border: 2px dashed var(--line); border-radius: 8px; padding: 18px; text-align: center; color: var(--muted); }
+.drop.over { border-color: var(--accent); color: var(--text); }
+.file-label { color: var(--accent); cursor: pointer; text-decoration: underline; }
+.tracks { list-style: none; padding: 0; margin: 10px 0 0; max-height: 240px; overflow: auto; }
+.tracks li { display: flex; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.tracks li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xf-labels { display: inline-flex; gap: 0; margin-left: 4px; }
+.xf-labels span { width: 1.5em; text-align: center; }
+.master { display: grid; gap: 10px; }
+.master label { display: grid; grid-template-columns: 110px 1fr; align-items: center; color: var(--muted); }
+.learning { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tracks li.sel { background: #2f2340; }
+.hotcues button.on { background: var(--accent); color: #1a1426; }
+.libnav { margin-top: 8px; }
+.wave { cursor: ew-resize; touch-action: none; }
+.jogrow { align-items: center; }
+/* Each quadrant scrolls inside itself, so nothing is cut off. */
+main.quad > section { min-height: 0; overflow: auto; }
+/* Vinyl per deck, spinning while the deck plays (Quad 03 mockup). */
+.vinyl { width: 112px; height: 112px; border-radius: 50%; margin: 6px auto; background: radial-gradient(circle, #B9B7B2 0 6px, transparent 7px), repeating-radial-gradient(circle, #1A1426 0 2px, #2F2340 3px 4px); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35); }
+.vinyl.playing { animation: spin 2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* Hot cues as a 4-pad grid. */
+.pads button { width: 46px; height: 46px; border-radius: 10px; padding: 0; }
+.pads button.on { background: #54D5E1; color: #1a1426; }
+.jog { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; letter-spacing: .08em; color: var(--muted); background: radial-gradient(circle at 35% 30%, #3a3f4f, #1c1f27 70%); border: 1px solid var(--line); cursor: pointer; user-select: none; }
+.jog.learning { outline: 2px solid var(--accent); }
+
+/* Skin to match the Quad 03 mockup: rounded grey panels, cyan headings, purple chips, pad buttons, thumb faders. */
+body { background: #2E2D2A; padding: 16px; }
+header h1 { color: #54D5E1; }
+.panel, .deck { background: #3A3935; border: none; border-radius: 16px; padding: 18px 20px; }
+main.quad { gap: 16px; }
+h2 { color: #54D5E1; text-transform: none; letter-spacing: 0; margin: 0 0 10px; }
+.deck h3 { color: #54D5E1; }
+.deck.B h3 { color: #B9B7B2; }
+.deck .name, .deck .time, .status, .monitor { color: #B9B7B2; }
+button { background: #4A4560; color: #B9B7B2; border: none; border-radius: 10px; padding: 6px 12px; cursor: pointer; }
+button:hover { background: #5a5474; border: none; }
+button.on { background: #54D5E1; color: #1A1426; }
+.pill { background: #2F2340; color: #E6E3DC; border-radius: 6px; }
+.drop { border: 2px dashed #55534D; color: #8E8A80; border-radius: 10px; }
+.drop.over { border-color: #54D5E1; }
+.file-label { color: #54D5E1; }
+.tracks li { border-bottom: 1px solid #55534D; }
+.tracks li.sel { background: #3E3560; box-shadow: inset 3px 0 0 #54D5E1; border-radius: 8px; }
+.tracks li span { color: #E6E3DC; }
+.wave { background: #45433E; border-radius: 10px; }
+.bpmcol { background: #2F2340; }
+.bpmcol.synced { background: #6B3FA0; }
+.jog { background: radial-gradient(circle at 35% 30%, #F7F6F3, #8E8A80 60%, #55534D); color: #1A1426; border: none; }
+input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: #55534D; accent-color: #54D5E1; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(#F7F6F3, #B9B7B2); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); }
+input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: none; border-radius: 6px; background: linear-gradient(#F7F6F3, #B9B7B2); }
+
+/* Type: SF Mono Bold 20 everywhere. */
+*, *::before, *::after {
+  font-family: "SF Mono", ui-monospace, Menlo, monospace !important;
+  font-weight: 700 !important;
+  font-size: 20px !important;
+}
+.wave { display: block; width: 100%; height: 96px; border-radius: 8px; margin: 6px 0; background: #1c1b19; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 6px; background: #2f2340; color: #e6e3dc; font-variant-numeric: tabular-nums; }
+.wave-row { display: flex; gap: 8px; align-items: stretch; }
+.wave-row .wave { flex: 1; min-width: 0; margin: 6px 0; }
+.bpmcol { width: 84px; flex: none; margin: 6px 0; border-radius: 8px; background: #2f2340; color: #e6e3dc; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bpmcol small { color: #8e8a80; font-size: 11px; letter-spacing: 0.06em; }
+.bpmcol.synced { background: #6b3fa0; color: #ffffff; }
+.bpmcol.synced small { color: #e6dcf5; }
+
+/* Quadrant layout: library top-left, controller top-right, tracks across the bottom. */
+.q-ctl .master { margin-top: 12px; }
+.q-tracks #lane-A, .q-tracks #lane-B { margin-bottom: 4px; }
+
+/* Mockup skin (Layout on the canvas): bevelled grey panels, cyan caps, grey pads, one screen with no scrolling. */
+body { padding: 16px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; }
+header { flex: none; }
+main.quad { gap: 16px; flex: 1; min-height: 0; height: auto; }
+@media (min-width: 900px) { main.quad { height: auto; grid-template-rows: minmax(0, 1.35fr) minmax(0, 0.65fr); } }
+main.quad > section { overflow: hidden; }
+.panel { background: #3A3935; border: none; border-radius: 4px; padding: 20px; box-shadow: inset 0 2px 0 #4A4944, inset 0 -3px 0 #26251F, 0 6px 0 #1F1E1A; }
+h2 { color: #B9B7B2; font-size: 20px; margin: 0 0 10px; }
+header { margin-bottom: 10px; }
+header h1 { font-size: 20px; }
+.deck, .q-ctl .decks { background: transparent; border: none; padding: 0; box-shadow: none; }
+.decks { gap: 16px; }
+.deck { gap: 10px; }
+.deck h3 { font-size: 20px; color: #54D5E1; margin: 0; }
+.deck .name, .deck .time { font-size: 16px; color: #8E8A80; }
+.deck .fader { color: #8E8A80; font-size: 16px; width: 64px; }
+/* Faders: dark grooved well with a cyan cap, drawn vertically. */
+.deck .time { display: none; }
+.deck .fader input[type="range"] { -webkit-appearance: none; appearance: none; width: 130px; height: 16px; margin: 57px -33px; transform: rotate(-90deg); background: #1E1D1A; border-radius: 3px; box-shadow: inset 0 4px 8px #0E0D0B; accent-color: #54D5E1; }
+.deck .fader input[type="range"]::-webkit-slider-runnable-track { height: 16px; background: transparent; }
+.deck .fader input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 44px; height: 30px; margin-top: -7px; border-radius: 3px; background: #54D5E1; box-shadow: inset 0 3px 0 #8BE6EF, inset 0 -3px 0 #3AA9B4, 0 5px 0 #2C8791; }
+.deck .fader input[type="range"]::-moz-range-thumb { width: 44px; height: 30px; border: none; border-radius: 3px; background: #54D5E1; }
+.deck .fader input[type="range"]::-moz-range-track { height: 16px; background: #1E1D1A; border-radius: 3px; }
+/* Pads: grey keys with a drop edge; a lit pad is cyan. */
+.deck .pads button { height: 44px; background: #45433E; border: none; border-radius: 4px; box-shadow: inset 0 2px 0 #56534D, 0 4px 0 #2A2925; color: #B9B7B2; }
+/* Small cyan dot marks a pad that has a stored cue (the pad itself only lights while held). */
+.deck .pads button { position: relative; }
+.deck .pads button.on::after { content: ""; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: #54D5E1; box-shadow: 0 0 0 1px #1A1426; }
+.deck .pads button.on.held::after { background: #1A1426; box-shadow: none; }
+.deck .pads button.held { background: #54D5E1; color: #1A1426; box-shadow: inset 0 2px 0 #8BE6EF, 0 4px 0 #2C8791; }
+.deck .transport button { background: #45433E; box-shadow: inset 0 2px 0 #56534D, 0 4px 0 #2A2925; }
+.deck .transport button.on { background: #54D5E1; }
+details.more { margin-top: 4px; }
+details.more summary { color: #8E8A80; cursor: pointer; font-size: 16px; }
+details.more > .row, details.more > .eq, details.more > .vinyl { margin: 8px 0; }
+details.more .vinyl { width: 84px; height: 84px; }
+/* Crossfader and master: a single bottom bar in the controller. */
+.q-ctl .master { background: transparent; box-shadow: none; padding: 0; margin-top: 8px; gap: 8px; }
+.master input[type="range"] { height: 16px; background: #1E1D1A; border-radius: 3px; box-shadow: inset 0 4px 8px #0E0D0B; }
+.master input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 60px; height: 34px; margin-top: -9px; border-radius: 3px; background: #54D5E1; box-shadow: inset 0 3px 0 #8BE6EF, inset 0 -3px 0 #3AA9B4, 0 5px 0 #2C8791; }
+/* Lanes: dark wells with cyan playhead, BPM box in the purple secondary. */
+.wave { background: #2E2D2A; border-radius: 4px; box-shadow: inset 0 3px 8px #1A1916; }
+.bpmcol { background: #2F2340; color: #54D5E1; border-radius: 4px; }
+
+/* Mockup-only view: hide everything outside the picked layout. The ⚙ button shows it all again. */
+.tools-toggle { position: fixed; top: 6px; right: 6px; z-index: 10; width: 32px; height: 32px; padding: 0; font-size: 16px; line-height: 1; opacity: 0.6; }
+body.hide-extra header,
+body.hide-extra .libnav,
+body.hide-extra .q-lib h2,
+body.hide-extra .q-ctl > h2,
+body.hide-extra .q-tracks h2,
+body.hide-extra .q-tracks .name,
+body.hide-extra .master label:last-child,
+body.hide-extra .deck h3,
+body.hide-extra .deck .name,
+body.hide-extra .deck .time,
+body.hide-extra .deck details.more { display: none; }
+/* Only Play is shown in each deck; Cue and Sync stay in the page for MIDI. */
+body.hide-extra .deck .transport button:not([data-ctl$=".play"]) { display: none; }
+body.hide-extra .deck .transport { justify-content: center; }
+/* Hidden controls keep their MIDI bindings but are not shown. */
+.deck [hidden] { display: none !important; }
+.deck .jogrow { justify-content: center; }
+.jog.scratching { box-shadow: 0 0 0 3px #54D5E1; }
+/* Library knob: a round dial; its pointer rotates with the value. */
+.libknob-row { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; }
+.libknob { width: 64px; height: 64px; flex: none; border-radius: 50%; background: #1E1D1A; box-shadow: inset 0 3px 8px #0E0D0B, 0 3px 0 #2A2925; position: relative; cursor: grab; touch-action: none; }
+.libknob:active { cursor: grabbing; }
+.libknob:focus-visible { outline: 2px solid #54D5E1; outline-offset: 3px; }
+.libknob i { position: absolute; left: 50%; top: 7px; width: 5px; height: 18px; margin-left: -2.5px; background: #54D5E1; border-radius: 3px; }
+.libknob-row .hint { color: #8E8A80; font-size: 14px; }
+body.hide-extra .q-ctl .master { margin-top: 4px; }
+/* Crossfader across the full width of the controller: label above, track spans the row. */
+body.hide-extra .master label:first-child { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; width: 100%; }
+body.hide-extra .master label:first-child input[type="range"] { width: 100%; }
+
+/* Deck layout (picked canvas layout): faders on top, four pads under them, the rest below. */
+.deck { display: flex; flex-direction: column; gap: 8px; }
+.deck > h3 { order: 0; }
+.deck > .faders { order: 1; }
+.deck > .pads { order: 2; }
+.deck > *:not(h3):not(.faders):not(.pads) { order: 3; }
+.faders { display: flex; justify-content: space-around; align-items: flex-end; gap: 8px; }
+.deck .fader { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 64px; color: var(--muted); }
+.fader input[type="range"] { width: 150px; height: 24px; margin: 60px 0; transform: rotate(-90deg); }
+.fader input[type="range"]::-webkit-slider-thumb { width: 44px; height: 22px; border-radius: 4px; }
+.pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.pads button { width: 100%; height: 46px; }
+
+@media (min-width: 900px) {
+  main.quad { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1.35fr) minmax(0, 0.65fr); height: auto; }
+  .q-lib { grid-column: 1; grid-row: 1; }
+  .q-ctl { grid-column: 2; grid-row: 1; }
+  .q-tracks { grid-column: 1 / -1; grid-row: 2; }
+  .decks { grid-template-columns: 1fr 1fr; }
+}

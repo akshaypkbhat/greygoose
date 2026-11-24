@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Jog Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a MIDI reader strip on top, then four jog wheels in a grid that stacks on a phone. Dark only, Grey Goose palette. */
+:root {
+  --screen: #2E2D2A;
+  --panel: #3A3935;
+  --well: #45433E;
+  --line: #55534D;
+  --accent: #54D5E1;
+  --purple: #2F2340;
+  --text: #E6E3DC;
+  --muted: #8E8A80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--screen);
+  color: var(--text);
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-weight: 700;
+  font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px;
+}
+h1 { margin: 0; font-size: 22px; color: var(--accent); }
+h2 { margin: 0 0 10px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+p { margin: 0; color: var(--muted); font-weight: 400; line-height: 1.5; }
+button {
+  font: inherit; color: var(--text); background: var(--well); border: 0; border-radius: 6px;
+  padding: 8px 12px; cursor: pointer; box-shadow: inset 0 2px 0 #56534D, 0 3px 0 #2A2925;
+}
+button:active { box-shadow: inset 0 2px 4px #1F1E1B; transform: translateY(1px); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: #1A1426; box-shadow: inset 0 2px 0 #8BE6EF, 0 3px 0 #2C8791; }
+.panel { background: var(--panel); border-radius: 6px; padding: 16px; box-shadow: inset 0 2px 0 #4A4944, inset 0 -3px 0 #26251F, 0 6px 0 #1F1E1A; }
+.stack { display: grid; gap: 16px; max-width: 1100px; margin: 0 auto; }
+header { display: grid; gap: 6px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.muted { color: var(--muted); font-weight: 400; }
+
+/* MIDI reader */
+.log { margin: 10px 0 0; padding: 0; list-style: none; max-height: 220px; overflow: auto; background: var(--well); border-radius: 4px; box-shadow: inset 0 3px 6px #1F1E1B; }
+.log li { display: grid; grid-template-columns: 56px 64px 1fr; gap: 10px; padding: 6px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.log li:last-child { border-bottom: 0; }
+.tag { color: var(--accent); }
+.pick { display: grid; gap: 8px; margin-top: 12px; }
+.pick span { color: var(--muted); font-weight: 400; }
+
+/* Wheels */
+.wheels { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.wheel { display: grid; gap: 10px; align-content: start; }
+.wheel h3 { margin: 0; font-size: 16px; color: var(--text); }
+.wheel .rule { color: var(--accent); font-size: 12px; font-weight: 400; }
+.disc-wrap { width: 100%; max-width: 240px; aspect-ratio: 1; margin: 0 auto; touch-action: none; user-select: none; cursor: grab; }
+.disc-wrap:active { cursor: grabbing; }
+.disc-wrap svg { width: 100%; height: 100%; display: block; }
+.readout { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-variant-numeric: tabular-nums; font-size: 13px; }
+.readout dt { color: var(--muted); font-weight: 400; }
+.readout dd { margin: 0; }
+.bar { height: 10px; background: var(--well); border-radius: 3px; box-shadow: inset 0 2px 4px #1F1E1B; position: relative; overflow: hidden; }
+.bar i { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--accent); left: 0; }
+.state { font-size: 12px; color: var(--accent); min-height: 16px; }
+.hint { font-size: 12px; color: var(--muted); font-weight: 400; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="stack">
+
+  <header>
+    <h1>Jog Lab</h1>
+    <p>Read a DJ controller's jog messages, then compare four jog wheel responses. Drag any wheel with the mouse, or turn and touch the jog on the controller.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="midi-h">
+    <h2 id="midi-h">MIDI input</h2>
+    <div class="row">
+      <button id="connect">Connect MIDI</button>
+      <span id="midi-status" class="muted">Not connected. Use Chrome or Edge.</span>
+    </div>
+    <ul id="log" class="log" aria-live="polite" aria-label="Incoming MIDI messages"></ul>
+    <div class="pick">
+      <span>A turning jog sends a relative CC. A touch sensor usually sends a note. Pick them from the last messages you saw.</span>
+      <div class="row">
+        <button id="set-cc">Use last CC as jog turn</button>
+        <span id="cc-now" class="muted">Jog turn: not set</span>
+      </div>
+      <div class="row">
+        <button id="set-note">Use last note as jog touch</button>
+        <span id="note-now" class="muted">Jog touch: not set</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="sim-h">
+    <h2 id="sim-h">Test without a controller</h2>
+    <div class="controls">
+      <button id="play">Pause</button>
+      <button id="tick-minus">Turn −1 tick</button>
+      <button id="tick-plus">Turn +1 tick</button>
+      <button id="touch-test">Hold to touch</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="wheels-h">
+    <h2 id="wheels-h" style="padding-left:2px">Jog wheel studies</h2>
+    <div id="wheels" class="wheels"></div>
+  </section>
+
+</div>
+
+<script>
+// ---- Shared state ----
+const TRACK_SECONDS = 160;          // simulated track length for every wheel
+const DEG_PER_TICK = 15;            // one tick = 15 degrees of platter movement
+const state = { playing: true, jogCC: null, touchNote: null, lastCC: null, lastNote: null };
+
+// Each study has the same inputs (turns in ticks, touch) and a different response.
+const STUDIES = [
+  {
+    id: 'linear', name: 'Linear scrub', rule: '0.05 s per tick',
+    blurb: 'Every tick moves the playhead the same distance. Playback keeps running underneath.',
+  },
+  {
+    id: 'touch', name: 'Touch scratch', rule: 'touch = scratch, release = pitch bend',
+    blurb: 'Hold the top to scratch: the track stops and turns move it. Let go and the platter pitch-bends back into playback.',
+  },
+  {
+    id: 'accel', name: 'Accelerating', rule: 'distance grows with spin speed',
+    blurb: 'Slow turns are precise for cueing. Fast spins move the playhead much further.',
+  },
+  {
+    id: 'nudge', name: 'Nudge', rule: 'speed offset, decays in about 0.2 s',
+    blurb: 'Turns change the playback speed only, for beatmatching. The playhead is not moved.',
+  },
+];
+
+const wheels = STUDIES.map(s => ({ ...s, pos: 0, offset: 0, rot: 0, touched: false, last: null, els: {} }));
+
+// ---- Response models: how one set of ticks changes each study ----
+function applyTicks(w, t) {
+  switch (w.id) {
+    case 'linear': w.pos += t * 0.05; break;
+    case 'touch':  if (w.touched) w.pos += t * 0.03; else w.offset += t * 0.05; break;
+    case 'accel':  w.pos += t * (1 + Math.abs(t) * 0.6) * 0.03; break;
+    case 'nudge':  w.offset += t * 0.06; break;
+  }
+}
+function baseRate(w) { return w.id === 'touch' && w.touched ? 0 : 1; }
+function rateOf(w) { return baseRate(w) + w.offset; }
+
+// ---- Build the cards ----
+const NS = 'http://www.w3.org/2000/svg';
+function buildWheel(w) {
+  const card = document.createElement('article');
+  card.className = 'panel wheel';
+  card.innerHTML = `
+    <div><h3>${w.name}</h3><div class="rule">${w.rule}</div></div>
+    <p>${w.blurb}</p>
+    <div class="disc-wrap" role="application" aria-label="${w.name} jog wheel. Drag to turn."></div>
+    <div class="state"></div>
+    <dl class="readout">
+      <dt>Playhead</dt><dd class="pos">0:00.0</dd>
+      <dt>Speed</dt><dd class="rate">+0.0%</dd>
+    </dl>
+    <div class="bar"><i></i></div>`;
+  const disc = card.querySelector('.disc-wrap');
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '-100 -100 200 200');
+  svg.innerHTML = `
+    <circle r="96" fill="#1E1D1A"/>
+    <circle r="92" fill="#2A2925"/>
+    <g class="platter">
+      <circle r="84" fill="#45433E"/>
+      ${Array.from({ length: 36 }, (_, i) => {
+        const a = i * 10 * Math.PI / 180;
+        const r1 = i % 9 === 0 ? 68 : 74;
+        return `<line x1="${Math.cos(a) * 80}" y1="${Math.sin(a) * 80}" x2="${Math.cos(a) * r1}" y2="${Math.sin(a) * r1}" stroke="${i % 9 === 0 ? '#54D5E1' : '#8E8A80'}" stroke-width="${i % 9 === 0 ? 3 : 1.5}"/>`;
+      }).join('')}
+      <circle r="58" fill="#3A3935"/>
+      <rect x="-3" y="-64" width="6" height="16" rx="2" fill="#54D5E1"/>
+    </g>
+    <circle r="14" fill="#1E1D1A"/>
+    <circle r="4" fill="#54D5E1"/>`;
+  disc.appendChild(svg);
+  w.els = {
+    card, disc, platter: svg.querySelector('.platter'), state: card.querySelector('.state'),
+    pos: card.querySelector('.pos'), rate: card.querySelector('.rate'), bar: card.querySelector('.bar i'),
+  };
+  // Mouse or touch drag: pressing the platter counts as a touch.
+  disc.addEventListener('pointerdown', (e) => {
+    w.touched = true;
+    disc.setPointerCapture?.(e.pointerId);
+    w.last = pointerAngle(disc, e);
+  });
+  disc.addEventListener('pointermove', (e) => {
+    if (w.last === null) return;
+    const a = pointerAngle(disc, e);
+    let d = a - w.last;
+    if (d > Math.PI) d -= 2 * Math.PI;
+    if (d < -Math.PI) d += 2 * Math.PI;
+    w.last = a;
+    turn(w, d / (Math.PI / 12 /* one tick per 15 degrees */));
+  });
+  const release = () => { w.touched = false; w.last = null; };
+  disc.addEventListener('pointerup', release);
+  disc.addEventListener('pointercancel', release);
+  return card;
+}
+
+function pointerAngle(el, e) {
+  const r = el.getBoundingClientRect();
+  return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2));
+}
+
+// Turn every wheel by t ticks (positive = clockwise).
+function turn(w, t) {
+  applyTicks(w, t);
+  w.rot += t * DEG_PER_TICK;
+}
+function turnAll(t) { wheels.forEach(w => turn(w, t)); }
+function touchAll(on) { wheels.forEach(w => { w.touched = on; }); }
+
+// ---- Frame loop: playback, decay, drawing ----
+let lastT = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - lastT) / 1000);
+  lastT = now;
+  for (const w of wheels) {
+    w.offset *= Math.exp(-dt * 5);
+    if (Math.abs(w.offset) < 1e-4) w.offset = 0;
+    const rate = rateOf(w);
+    if (state.playing) w.pos += dt * rate;
+    w.pos = Math.max(0, Math.min(TRACK_SECONDS, w.pos));
+    draw(w, rate);
+  }
+  requestAnimationFrame(frame);
+}
+function draw(w, rate) {
+  const e = w.els;
+  e.platter.setAttribute('transform', `rotate(${w.rot.toFixed(2)})`);
+  e.pos.textContent = fmt(w.pos);
+  const pct = (rate - 1) * 100;
+  e.rate.textContent = `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`;
+  e.bar.style.left = `${(w.pos / TRACK_SECONDS) * 100}%`;
+  let text = 'Speed only';
+  if (w.id === 'linear') text = 'Scrub';
+  if (w.id === 'accel') text = 'Scrub, accelerating';
+  if (w.id === 'touch') text = w.touched ? 'Touched: scratching' : 'Released: pitch bend';
+  if (w.id === 'nudge') text = 'Nudging';
+  e.state.textContent = text;
+  e.card = e.card; // keep reference
+}
+function fmt(s) {
+  const m = Math.floor(s / 60), r = s - m * 60;
+  return `${m}:${r.toFixed(1).padStart(4, '0')}`;
+}
+
+// ---- MIDI reader ----
+const logEl = document.getElementById('log');
+const midiStatus = document.getElementById('midi-status');
+const names = { 0x80: 'note off', 0x90: 'note on', 0xB0: 'CC', 0xE0: 'pitch bend' };
+
+function describe(data) {
+  const [status, d1 = 0, d2 = 0] = data;
+  const kind = status & 0xF0;
+  const ch = (status & 0x0F) + 1;
+  const type = kind === 0x90 && d2 === 0 ? 'note off' : (names[kind] || 'other');
+  let detail = `#${d1} value ${d2}`;
+  if (kind === 0xB0) {
+    const rel = d2 >= 64 ? d2 - 128 : d2;
+    detail = `#${d1} value ${d2} (relative ${rel >= 0 ? '+' : ''}${rel})`;
+  }
+  return { type, ch, num: d1, value: d2, detail, kind };
+}
+
+function logMessage(data) {
+  const m = describe(data);
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="tag">ch ${m.ch}</span><span>${m.type}</span><span>${m.detail}</span>`;
+  logEl.prepend(li);
+  while (logEl.children.length > 60) logEl.lastElementChild.remove();
+}
+
+function onMidi(e) {
+  const m = describe(e.data);
+  logMessage(e.data);
+  if (m.kind === 0xB0) {
+    state.lastCC = m;
+    if (state.jogCC && state.jogCC.ch === m.ch && state.jogCC.num === m.num) {
+      const rel = m.value >= 64 ? m.value - 128 : m.value;
+      turnAll(rel);
+    }
+  } else if (m.kind === 0x90 || m.kind === 0x80) {
+    state.lastNote = m;
+    if (state.touchNote && state.touchNote.ch === m.ch && state.touchNote.num === m.num) {
+      touchAll(m.type === 'note on');
+    }
+  }
+}
+
+document.getElementById('connect').addEventListener('click', async () => {
+  if (!navigator.requestMIDIAccess) { midiStatus.textContent = 'Web MIDI is not available here. Try Chrome or Edge.'; return; }
+  try {
+    const access = await navigator.requestMIDIAccess({ sysex: false });
+    const inputs = [...access.inputs.values()];
+    inputs.forEach(i => { i.onmidimessage = onMidi; });
+    midiStatus.textContent = inputs.length ? `Listening to: ${inputs.map(i => i.name).join(', ')}` : 'Connected, but no inputs found. Plug in the controller and try again.';
+  } catch (err) {
+    midiStatus.textContent = `MIDI was blocked: ${err.message || err}`;
+  }
+});
+document.getElementById('set-cc').addEventListener('click', () => {
+  if (!state.lastCC) return;
+  state.jogCC = { ch: state.lastCC.ch, num: state.lastCC.num };
+  document.getElementById('cc-now').textContent = `Jog turn: CC ${state.jogCC.num}, channel ${state.jogCC.ch}`;
+});
+document.getElementById('set-note').addEventListener('click', () => {
+  if (!state.lastNote) return;
+  state.touchNote = { ch: state.lastNote.ch, num: state.lastNote.num };
+  document.getElementById('note-now').textContent = `Jog touch: note ${state.touchNote.num}, channel ${state.touchNote.ch}`;
+});
+
+// ---- Test controls ----
+const playBtn = document.getElementById('play');
+playBtn.addEventListener('click', () => {
+  state.playing = !state.playing;
+  playBtn.textContent = state.playing ? 'Pause' : 'Play';
+  playBtn.classList.toggle('on', !state.playing);
+});
+document.getElementById('tick-minus').addEventListener('click', () => turnAll(-1));
+document.getElementById('tick-plus').addEventListener('click', () => turnAll(1));
+const touchBtn = document.getElementById('touch-test');
+touchBtn.addEventListener('pointerdown', () => { touchAll(true); touchBtn.classList.add('on'); });
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => touchBtn.addEventListener(ev, () => { touchAll(false); touchBtn.classList.remove('on'); }));
+
+// ---- Start ----
+const host = document.getElementById('wheels');
+wheels.forEach(w => host.appendChild(buildWheel(w)));
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
